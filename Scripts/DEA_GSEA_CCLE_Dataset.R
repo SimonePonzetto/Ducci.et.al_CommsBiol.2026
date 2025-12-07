@@ -34,6 +34,7 @@ library(readxl)
 library(EnsDb.Hsapiens.v86)
 library(reformulas)
 library(variancePartition)
+library(sva)
 
 ##Loading Raw count data and Annotations----------------------------------------
 #Raw data
@@ -104,4 +105,53 @@ plotVarPart(varPart)
 ## mitigate the masking effect for other confounding factors so to extract 
 ## clean and meaningful results from DEA and GSEA.
 ## Invasiveness, since a co-variate of interest and since its explained variance
-## surpass FGFR3 will be kept as random effect for modelling
+## surpass FGFR3 will be kept as random effect for modelling.
+
+## I dds object creation--------------------------------------------------------
+dds <-  DESeqDataSetFromMatrix(countData = as.matrix(rawdata.filt[2:18]),
+                               colData = designMatrix, design = ~Invasiveness + FGFR3)
+
+## Perform SVA------------------------------------------------------------------
+# Extract the dds object
+vsd <- vst(dds, blind = TRUE)
+expr_mat <- assay(vsd)
+
+# Create the required models
+mod <- model.matrix(~ Invasiveness + FGFR3, data = colData(dds))    
+mod0 <- model.matrix(~ 1, data = colData(dds))
+
+# Estimate optimal SVs
+n.sv <- num.sv(expr_mat, mod, method = "be")  
+svobj <- sva(expr_mat, mod, mod0, n.sv = n.sv) 
+
+# Add SVs to dds object
+for (i in 1:n.sv) {
+  colData(dds)[, paste0("SV", i)] <- svobj$sv[, i]
+}
+
+## Update design to include SVs-------------------------------------------------
+sv_formula <- paste0("~", paste(paste0("SV", 1:n.sv), collapse = " + "), "+ Invasiveness + FGFR3")
+design(dds) <- as.formula(sv_formula)
+dds$FGFR3 <- relevel(dds$FGFR3, ref = "wt")
+
+## Filter dds and run DESeq2----------------------------------------------------
+keep <- rowSums(counts(dds) >= 20) >= 6
+dds <- dds[keep,]
+dds <- DESeq(dds, test = c("Wald"), fitType = c("parametric"))
+
+resultsNames(dds)
+
+res <- results(dds, name = "FGFR3_mut_vs_wt", pAdjustMethod = "BH", test = "Wald")
+res2 <- lfcShrink(dds, res = res, coef = "FGFR3_mut_vs_wt", type = c("apeglm"))
+res2 <- as.data.frame(res2)
+
+norm_counts <- counts(dds, normalized = T)
+norm_counts <- as.data.frame(norm_counts)
+
+res2$Gene <- rownames(res2)
+norm_counts$Gene <- rownames(norm_counts)
+
+Final <- merge(res2, norm_counts, by = "Gene", all = T)
+Final$rnk <- Final$log2FoldChange*(-log10(Final$pvalue))
+
+write.csv(Final, "FGFR3_MutvsWT_CCLEDataset_SVs_Corrected_07122025.csv", row.names = T)
