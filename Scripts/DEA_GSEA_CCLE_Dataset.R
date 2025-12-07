@@ -195,8 +195,8 @@ ggplot(dds.pca, aes(x = PC1, y = PC2, colour = FGFR3, label = sample)) +
   geom_text_repel(colour = "black", segment.alpha = 0.4, force = 4) +
   labs(title = "PCA Plot", subtitle = "FGFR3 Mut vs Wt - Cell Lines",
        colour = "Condition") +
-  xlab("PC1: 44%") +
-  ylab("PC2: 23%") +
+  xlab("PC1: 33%") +
+  ylab("PC2: 11%") +
   theme_light() +
   theme(plot.title = element_text(hjust = 0.5, size = 20),
         plot.subtitle = element_text(hjust = 0.5, size = 16))
