@@ -85,6 +85,7 @@ rawdata_annot <- rawdata_annot[indx.match,]
 
 designMatrix <- data.frame(
   row.names = colnames(rawdata.filt[2:18]),
+  sample = colnames(rawdata.filt[2:18]),
   Invasiveness = rawdata_annot$Invasiveness,
   FGFR3 = rawdata_annot$FGFR3
 )
@@ -108,7 +109,9 @@ plotVarPart(varPart)
 ## surpass FGFR3 will be kept as random effect for modelling.
 
 ## I dds object creation--------------------------------------------------------
-dds <-  DESeqDataSetFromMatrix(countData = as.matrix(rawdata.filt[2:18]),
+count.matrix <- as.matrix(rawdata.filt[2:18])
+rownames(count.matrix) <- rawdata.filt$gene_name
+dds <-  DESeqDataSetFromMatrix(countData = count.matrix,
                                colData = designMatrix, design = ~Invasiveness + FGFR3)
 
 ## Perform SVA------------------------------------------------------------------
@@ -135,14 +138,14 @@ design(dds) <- as.formula(sv_formula)
 dds$FGFR3 <- relevel(dds$FGFR3, ref = "wt")
 
 ## Filter dds and run DESeq2----------------------------------------------------
-keep <- rowSums(counts(dds) >= 20) >= 6
+keep <- rowSums(counts(dds) >= 20) >= 4
 dds <- dds[keep,]
 dds <- DESeq(dds, test = c("Wald"), fitType = c("parametric"))
 
 resultsNames(dds)
 
 res <- results(dds, name = "FGFR3_mut_vs_wt", pAdjustMethod = "BH", test = "Wald")
-res2 <- lfcShrink(dds, res = res, coef = "FGFR3_mut_vs_wt", type = c("apeglm"))
+res2 <- lfcShrink(dds, res = res, coef = "FGFR3_mut_vs_wt", type = c("ashr"))
 res2 <- as.data.frame(res2)
 
 norm_counts <- counts(dds, normalized = T)
@@ -154,4 +157,46 @@ norm_counts$Gene <- rownames(norm_counts)
 Final <- merge(res2, norm_counts, by = "Gene", all = T)
 Final$rnk <- Final$log2FoldChange*(-log10(Final$pvalue))
 
-write.csv(Final, "FGFR3_MutvsWT_CCLEDataset_SVs_Corrected_07122025.csv", row.names = T)
+write.csv(Final, "../FGFR3_MutvsWT_CCLEDataset_SVs_Corrected_07122025.csv", row.names = T)
+
+##Create Volcano Plot-----------------------------------------------------------
+volcano <- res2
+volcano[is.na(volcano$padj),"padj"] <- 1
+volcano$Logpval <- -log10(volcano$padj)
+
+volcano <- volcano %>%
+  mutate(direction = case_when(log2FoldChange >= 1.0 & Logpval > 1 ~ "UpReg",
+                               log2FoldChange <= -1.0 & Logpval > 1.0 ~ "DownReg",
+                               TRUE ~ "NotSign"))
+
+topgenes <- volcano[volcano$Logpval >= 3 & abs(volcano$log2FoldChange) >= 2,]
+
+ggplot(volcano, aes(x = log2FoldChange, y = Logpval, colour = direction, label = Gene)) +
+  geom_point() +
+  geom_text_repel(data = topgenes, force = 4, colour = "black", segment.alpha = 0.4) +
+  scale_color_manual(values = c("blue4", "grey", "red4")) +
+  geom_vline(xintercept = c(-1, 1), colour = "black", linetype = "dashed") +
+  geom_hline(yintercept = 1, colour = "black", linetype = "dashed") +
+  xlab("Log2 (FoldChange)") +
+  ylab("Log10 (Adj. p-Value)") +
+  labs(title = "Volcano Plot", subtitle = "FGFR3 Mut vs Wt - CCLE Dataset",
+       colour = "Mode of Regulation") +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        plot.subtitle = element_text(hjust = 0.5, size = 16))
+
+##Extract and plot PCA----------------------------------------------------------
+dds.trsf <- vst(dds)
+dds.pca <- plotPCA(dds.trsf, intgroup = "sample", returnData = T)
+
+ggplot(dds.pca, aes(x = PC1, y = PC2, colour = FGFR3, label = sample)) +
+  geom_point(size = 4) +
+  scale_color_manual(values = c("#9100d2", "#d9a111")) +
+  geom_text_repel(colour = "black", segment.alpha = 0.4, force = 4) +
+  labs(title = "PCA Plot", subtitle = "FGFR3 Mut vs Wt - Cell Lines",
+       colour = "Condition") +
+  xlab("PC1: 44%") +
+  ylab("PC2: 23%") +
+  theme_light() +
+  theme(plot.title = element_text(hjust = 0.5, size = 20),
+        plot.subtitle = element_text(hjust = 0.5, size = 16))
