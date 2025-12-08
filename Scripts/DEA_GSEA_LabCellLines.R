@@ -97,11 +97,15 @@ write.csv(FinalResultsTable, "../ResultsTable_FGFR3_MUTvsWT_Wald_Parametric_0812
 rnk.file <- FinalResultsTable[c(1,22)]
 i <- order(rnk.file$rnk, decreasing = T)
 rnk.file <- rnk.file[i,]
-write.table(rnk.file$rnk, row.names = rnk.file$Gene, quote = F, col.names = F, file = "../LabCL.rnk", sep = "\t")
+write.table(rnk.file$rnk, row.names = rnk.file$Gene, quote = F, col.names = F,
+            file = "../LabCL.rnk", sep = "\t")
 
 ## Save reference and universe--------------------------------------------------
-write.table(FinalResultsTable$Gene, quote = F, row.names = F, col.names = F, file = "../LabCL.Universe.WebGestalt.txt")
-write.table(volcano$Gene[!(volcano$direction %in% "NotSign")], quote = F, row.names = F, col.names = F, file = "../LabCL.Universe.WebGestalt.txt")
+write.table(FinalResultsTable$Gene, quote = F, row.names = F, col.names = F,
+            file = "../LabCL.Universe.WebGestalt.txt")
+write.table(volcano$Gene[!(volcano$direction %in% "NotSign")], quote = F,
+            row.names = F, col.names = F,
+            file = "../LabCL.Universe.WebGestalt.txt")
 
 ##Create Volcano Plot-----------------------------------------------------------
 volcano <- res2
