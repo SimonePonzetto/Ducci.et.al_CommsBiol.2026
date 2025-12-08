@@ -105,7 +105,7 @@ write.table(FinalResultsTable$Gene, quote = F, row.names = F, col.names = F,
             file = "../LabCL.Universe.WebGestalt.txt")
 write.table(volcano$Gene[!(volcano$direction %in% "NotSign")], quote = F,
             row.names = F, col.names = F,
-            file = "../LabCL.Universe.WebGestalt.txt")
+            file = "../LabCL.Reference.WebGestalt.txt")
 
 ##Create Volcano Plot-----------------------------------------------------------
 volcano <- res2

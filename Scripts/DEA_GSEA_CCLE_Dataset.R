@@ -155,9 +155,25 @@ res2$Gene <- rownames(res2)
 norm_counts$Gene <- rownames(norm_counts)
 
 Final <- merge(res2, norm_counts, by = "Gene", all = T)
-Final$rnk <- Final$log2FoldChange*(-log10(Final$pvalue))
+
+Final$padj <- ifelse(is.na(Final$padj), 1, Final$padj)
+Final$rnk <- Final$log2FoldChange*(-log10(Final$padj))
 
 write.csv(Final, "../FGFR3_MutvsWT_CCLEDataset_SVs_Corrected_07122025.csv", row.names = T)
+
+## Save pre-rnk file------------------------------------------------------------
+rnk.file <- Final[c(1,24)]
+i <- order(rnk.file$rnk, decreasing = T)
+rnk.file <- rnk.file[i,]
+write.table(rnk.file$rnk, row.names = rnk.file$Gene, quote = F, col.names = F,
+            file = "../CCLE.rnk", sep = "\t")
+
+## Save reference and universe--------------------------------------------------
+write.table(Final$Gene, quote = F, row.names = F, col.names = F,
+            file = "../CCLE.Universe.WebGestalt.txt")
+write.table(volcano$Gene[!(volcano$direction %in% "NotSign")], quote = F,
+            row.names = F, col.names = F,
+            file = "../LabCL.Reference.WebGestalt.txt")
 
 ##Create Volcano Plot-----------------------------------------------------------
 volcano <- res2
