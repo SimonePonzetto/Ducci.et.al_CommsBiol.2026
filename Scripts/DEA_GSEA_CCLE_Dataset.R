@@ -86,6 +86,7 @@ rawdata_annot <- rawdata_annot[indx.match,]
 designMatrix <- data.frame(
   row.names = colnames(rawdata.filt[2:18]),
   sample = colnames(rawdata.filt[2:18]),
+  Grade = rawdata_annot$`High/Low Grade`,
   Invasiveness = rawdata_annot$Invasiveness,
   FGFR3 = rawdata_annot$FGFR3
 )
@@ -94,7 +95,7 @@ designMatrix <- data.frame(
 exprSet <- ExpressionSet(assayData = as.matrix(rawdata.filt[2:18]))
 
 # Model formula (random effects)
-form <- ~ (1|FGFR3) + (1|Invasiveness)
+form <- ~ (1|FGFR3) + (1|Invasiveness) + (1|Grade)
 varPart <- fitExtractVarPartModel(exprSet, form, designMatrix,
                                   BPPARAM=SerialParam())
 
@@ -112,7 +113,7 @@ plotVarPart(varPart)
 count.matrix <- as.matrix(rawdata.filt[2:18])
 rownames(count.matrix) <- rawdata.filt$gene_name
 dds <-  DESeqDataSetFromMatrix(countData = count.matrix,
-                               colData = designMatrix, design = ~Invasiveness + FGFR3)
+                               colData = designMatrix, design = ~Invasiveness + Grade + FGFR3)
 
 ## Perform SVA------------------------------------------------------------------
 # Extract the dds object
@@ -124,7 +125,7 @@ mod <- model.matrix(~ Invasiveness + FGFR3, data = colData(dds))
 mod0 <- model.matrix(~ 1, data = colData(dds))
 
 # Estimate optimal SVs
-n.sv <- num.sv(expr_mat, mod, method = "be")  
+n.sv <- num.sv(expr_mat, mod, method = "leek")  
 svobj <- sva(expr_mat, mod, mod0, n.sv = n.sv) 
 
 # Add SVs to dds object
@@ -138,7 +139,7 @@ design(dds) <- as.formula(sv_formula)
 dds$FGFR3 <- relevel(dds$FGFR3, ref = "wt")
 
 ## Filter dds and run DESeq2----------------------------------------------------
-keep <- rowSums(counts(dds) >= 20) >= 4
+keep <- rowSums(counts(dds) >= 10) >= 4
 dds <- dds[keep,]
 dds <- DESeq(dds, test = c("Wald"), fitType = c("parametric"))
 
@@ -159,21 +160,21 @@ Final <- merge(res2, norm_counts, by = "Gene", all = T)
 Final$padj <- ifelse(is.na(Final$padj), 1, Final$padj)
 Final$rnk <- Final$log2FoldChange*(-log10(Final$padj))
 
-write.csv(Final, "../FGFR3_MutvsWT_CCLEDataset_SVs_Corrected_07122025.csv", row.names = T)
+write.csv(Final, "../Results_CCLE/FGFR3_MutvsWT_CCLEDataset_SVs_Corrected_14122025.csv", row.names = T)
 
 ## Save pre-rnk file------------------------------------------------------------
 rnk.file <- Final[c(1,24)]
 i <- order(rnk.file$rnk, decreasing = T)
 rnk.file <- rnk.file[i,]
 write.table(rnk.file$rnk, row.names = rnk.file$Gene, quote = F, col.names = F,
-            file = "../CCLE.rnk", sep = "\t")
+            file = "../Results_CCLE/CCLE.rnk", sep = "\t")
 
 ## Save reference and universe--------------------------------------------------
 write.table(Final$Gene, quote = F, row.names = F, col.names = F,
-            file = "../CCLE.Universe.WebGestalt.txt")
+            file = "../Results_CCLE/CCLE.Universe.WebGestalt.txt")
 write.table(volcano$Gene[!(volcano$direction %in% "NotSign")], quote = F,
             row.names = F, col.names = F,
-            file = "../LabCL.Reference.WebGestalt.txt")
+            file = "../Results_CCLE/LabCL.Reference.WebGestalt.txt")
 
 ##Create Volcano Plot-----------------------------------------------------------
 volcano <- res2
@@ -209,7 +210,7 @@ ggplot(dds.pca, aes(x = PC1, y = PC2, colour = FGFR3, label = sample)) +
   geom_point(size = 4) +
   scale_color_manual(values = c("#9100d2", "#d9a111")) +
   geom_text_repel(colour = "black", segment.alpha = 0.4, force = 4) +
-  labs(title = "PCA Plot", subtitle = "FGFR3 Mut vs Wt - Cell Lines",
+  labs(title = "PCA Plot", subtitle = "FGFR3 Mut vs Wt - CCLE Dataset",
        colour = "Condition") +
   xlab("PC1: 33%") +
   ylab("PC2: 11%") +
