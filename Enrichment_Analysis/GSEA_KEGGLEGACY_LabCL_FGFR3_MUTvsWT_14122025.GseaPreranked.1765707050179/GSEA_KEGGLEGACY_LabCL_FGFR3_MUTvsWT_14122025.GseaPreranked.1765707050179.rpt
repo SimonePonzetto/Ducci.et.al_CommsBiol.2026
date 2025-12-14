@@ -1,0 +1,23 @@
+producer_class	xtools.gsea.GseaPreranked
+producer_timestamp	1765707050179
+param	rpt_label	GSEA_KEGGLEGACY_LabCL_FGFR3_MUTvsWT_14122025
+param	rnd_seed	timestamp
+param	set_min	15
+param	zip_report	false
+param	create_svgs	true
+param	scoring_scheme	classic
+param	rnk	/home/simone/Desktop/R_Main/Results_LabCL/LabCL.rnk
+param	norm	meandiv
+param	out	/home/simone/Desktop/R_Main/Results_LabCL/EnrichmentAnalysis
+param	mode	Abs_max_of_probes
+param	include_only_symbols	true
+param	help	false
+param	set_max	500
+param	gmx	ftp.broadinstitute.org://pub/gsea/msigdb/human/gene_sets/c2.cp.kegg_legacy.v2025.1.Hs.symbols.gmt
+param	make_sets	true
+param	plot_top_x	20
+param	gui	false
+param	nperm	1000
+param	collapse	No_Collapse
+
+file	/home/simone/Desktop/R_Main/Results_LabCL/EnrichmentAnalysis/GSEA_KEGGLEGACY_LabCL_FGFR3_MUTvsWT_14122025.GseaPreranked.1765707050179/index.html

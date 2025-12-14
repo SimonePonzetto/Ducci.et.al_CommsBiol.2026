@@ -1,0 +1,6 @@
+Overall results were robust to alternative model specifications including adjustment for tumor grade and invasiveness.
+
+It is always seen at the top: You always see, at the very top:
+Interferon-α / Interferon-γ, mTORC1 signaling, Inflammatory / TNFα / JAK-STAT, EMT, Complement, ROS / metabolism.
+
+Oxidative phosphorylation pathway enrichment was significant across all models but showed a stronger signal when adjusting only for invasiveness. This suggests that OxPhos activity is partially associated with tumor grade and reflects metabolic differences that overlap with the mutation effects.
