@@ -29,6 +29,9 @@ library(dplyr)
 library(ggplot2)
 library(ggrepel)
 library(DESeq2)
+library(CePa)
+library(readxl)
+library(EnsDb.Hsapiens.v86)
 
 ##Loading Raw count data--------------------------------------------------------
 rawdata <- read.csv("../Raw/Raw_Matrix.csv")
@@ -126,7 +129,7 @@ design_matrix <- data.frame(
 dds <- DESeqDataSetFromMatrix(countData = rawdata.mtx,
                               colData = design_matrix,
                               design = ~batch + Invasiveness + Grade + condition)
-smallestGroupSize <- 3
+smallestGroupSize <- 7
 keep <- rowSums(counts(dds) >= 10) >= smallestGroupSize
 dds <- dds[keep, ]
 
@@ -152,21 +155,21 @@ FinalResultsTable <- merge(res2, norm_counts, by = "Gene", all = T)
 FinalResultsTable$padj <- ifelse(is.na(FinalResultsTable$padj), 1, FinalResultsTable$padj)
 FinalResultsTable$rnk <- FinalResultsTable$log2FoldChange*(-log10(FinalResultsTable$padj))
 
-write.csv(FinalResultsTable, "../ResultsTable_LabCL_FGFR3_MUTvsWT_Wald_Parametric_14122025.csv", row.names = F)
+write.csv(FinalResultsTable, "../ResultsTable_LabCL.CCLE_Merged_FGFR3_MUTvsWT_Wald_Parametric_08032026.csv", row.names = F)
 
 ## Save pre-rnk file------------------------------------------------------------
 rnk.file <- FinalResultsTable[c(1,39)]
 i <- order(rnk.file$rnk, decreasing = T)
 rnk.file <- rnk.file[i,]
 write.table(rnk.file$rnk, row.names = rnk.file$Gene, quote = F, col.names = F,
-            file = "../Lab_CCLEok.rnk", sep = "\t")
+            file = "../LabCL.CCLE_Merged.rnk", sep = "\t")
 
 ## Save reference and universe--------------------------------------------------
 write.table(FinalResultsTable$Gene, quote = F, row.names = F, col.names = F,
-            file = "../Results_LabCL/LabCL.Universe.WebGestalt.txt")
+            file = "../Results_LabCL.CCLE_Merged.Requested/LabCL.CCLE_Merged.Universe.WebGestalt.txt")
 write.table(volcano$Gene[!(volcano$direction %in% "NotSign")], quote = F,
             row.names = F, col.names = F,
-            file = "../Results_LabCL/LabCL.Reference.WebGestalt.txt")
+            file = "../Results_LabCL.CCLE_Merged.Requested/LabCL.CCLE_Merged.Reference.WebGestalt.txt")
 
 ##Create Volcano Plot-----------------------------------------------------------
 volcano <- res2
