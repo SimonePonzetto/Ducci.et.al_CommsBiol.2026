@@ -1,6 +1,6 @@
 #Bioinformatician:: Simone Ponzetto [simone.ponzetto@ifom.eu]
 
-##DEA and GSEA Analysis - in Lab cell lines [RT112, 5637, UMUC3, HT1376, J82]
+##DEA and GSEA Analysis - Requested Merged approach for LabCL and CCLE
 #The comparison of biological interest is Mutate vs WT (regarding FGFR3 gene)
 
 #for analysis full reproducibility, all packages, dependencies and versions are
