@@ -1,6 +1,6 @@
 #Bioinformatician:: Simone Ponzetto [simone.ponzetto@ifom.eu]
 
-##DEA and GSEA Analysis - CCLE cell lines (downloaded from https://sites.broadinstitute.org/ccle)
+##DEA and GSEA Analysis - TCGA Dataset downloaded from https://www.cancer.gov [BLCA Samples]
 #The comparison of biological interest is Mutate (6 cell lines) vs WT (11 cell lines) (regarding FGFR3 gene)
 
 #for analysis full reproducibility, all packages, dependencies and versions are
